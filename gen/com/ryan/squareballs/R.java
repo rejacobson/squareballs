@@ -29,15 +29,19 @@ public final class R {
         public static final int player2=0x7f02000f;
         public static final int player3=0x7f020010;
         public static final int player4=0x7f020011;
-        public static final int tile_goal=0x7f020012;
-        public static final int tile_wall=0x7f020013;
-        public static final int tilesmaster=0x7f020014;
+        public static final int powerbar=0x7f020012;
+        public static final int tile_goal=0x7f020013;
+        public static final int tile_wall=0x7f020014;
+        public static final int tilesmaster=0x7f020015;
     }
     public static final class layout {
         public static final int main=0x7f030000;
     }
     public static final class string {
-        public static final int app_name=0x7f040001;
-        public static final int hello=0x7f040000;
+        public static final int app_name=0x7f050001;
+        public static final int hello=0x7f050000;
+    }
+    public static final class xml {
+        public static final int levels=0x7f040000;
     }
 }

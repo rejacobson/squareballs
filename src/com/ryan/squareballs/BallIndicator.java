@@ -44,7 +44,7 @@ public class BallIndicator {
 	}
 	
 	public void update() {
-		if (currentWidth > width + 40 || currentHeight > height + 40) {
+		if (currentWidth > width + 15 || currentHeight > height + 15) {
 			currentWidth = width;
 			currentHeight = height;
 			strokeWidth = 1.0F;

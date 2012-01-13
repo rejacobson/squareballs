@@ -2,6 +2,7 @@ package com.ryan.squareballs;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.XmlResourceParser;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -38,7 +39,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	
 	private ScoreCard scoreCard;
 	private BallIndicator ballIndicator;
-	private ShootIndicator shootIndicator;
+	private BallShooter ballShooter;
 	
 	private float scaleAmount;
 
@@ -53,8 +54,10 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	}
 	
 	private void setupGame() {
+		//XmlResourceParser levelResources = getResources().getXml(R.xml.levels);
+		
 		ballIndicator = new BallIndicator();
-		shootIndicator = new ShootIndicator();
+		ballShooter = new BallShooter(getResources());
 		
 		friction = 0.99F;
 		dampening = 0.1f;
@@ -66,22 +69,34 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		
 		turnTaken = false;
 		
-		players = new Player[4];
+		players = new Player[1];
 		
 		players[0] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player1)));		
-		players[1] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player2)));		
+		/*players[1] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player2)));		
 		players[2] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player3)));		
 		players[3] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player4)));
+		*/
 		
 		scoreCard = new ScoreCard(players);
 		
 		tileList = new TileList(getResources(), 20, 20);
 		
-		levels = new int[3];
+		levels = new int[13];
 		levels[0] = R.drawable.level1;
 		levels[1] = R.drawable.level2;
 		levels[2] = R.drawable.level3;
-		currentLevel = 1;
+		levels[3] = R.drawable.level4;
+		levels[4] = R.drawable.level5;
+		levels[5] = R.drawable.level6;
+		levels[6] = R.drawable.level7;
+		levels[7] = R.drawable.level8;
+		levels[8] = R.drawable.level9;
+		levels[9] = R.drawable.level10;
+		levels[10] = R.drawable.level11;
+		levels[11] = R.drawable.level12;
+		levels[12] = R.drawable.level13;
+		currentLevel = 0;
+		currentPlayerIndex = 0;
 		
 		loadLevel();
 	}
@@ -98,11 +113,15 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		}
 		
 		levelWon = false;
+		turnTaken = false;
+		touching = false;
+		touchPosition.set(0, 0);
 		
-		currentPlayerIndex = 0;
+		//currentPlayerIndex = 0;
 		currentPlayer = players[currentPlayerIndex];
 		currentBall = currentPlayer.getBall();
 		ballIndicator.targetEntity(currentBall);
+		ballShooter.targetEntity(currentBall);
 		
 		thread.Resume();
 	}
@@ -183,7 +202,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 			if (currentBall.isTouched()) {
 				turnTaken = true;
 				Vector2f touchUpPosition = new Vector2f(event.getX(), event.getY());
-				Vector2f velocity = Vector2f.subtract(currentBall.position, touchUpPosition).multiply(dampening);
+				Vector2f velocity = ballShooter.getForce(); //Vector2f.subtract(currentBall.position, touchUpPosition).multiply(dampening);
 				
 				currentBall.setTouched(false);
 				currentBall.setVelocity(velocity);
@@ -204,10 +223,12 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		
 		currentPlayer = players[currentPlayerIndex];
 		currentBall = currentPlayer.getBall();
+		
 		ballIndicator.targetEntity(currentBall);
+		ballShooter.targetEntity(currentBall);
 	}
 	
-	public void update(long tickCount) {				
+	public void update(long tickCount) {
 		ballIndicator.update();
 		
 		if (scaleAmount < 1 && !touching) {
@@ -225,6 +246,11 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		
 		for (int i=0; i<players.length; i++) {
 			ball = players[i].getBall();
+			
+			//ballShooter.setDirection(Vector2f.subtract(ball.position, touchPosition).getUnit());
+			ballShooter.setTouchPosition(touchPosition);
+			ballShooter.update();
+			//ballShooter.setMagnitude(Vector2f.subtract(ball.position, touchPosition).getMagnitude());
 			
 			if (ball.isActive()) {
 				ball.update();
@@ -395,10 +421,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 			ball.draw(canvas);
 			
 			if (ball.isTouched()) {
-				shootIndicator.targetEntity(ball);
-				shootIndicator.setDirection(Vector2f.subtract(ball.position, touchPosition).getUnit());
-				shootIndicator.setMagnitude(Vector2f.subtract(ball.position, touchPosition).getMagnitude());
-				shootIndicator.draw(canvas);
+				ballShooter.draw(canvas);
 			}
 		}
 		

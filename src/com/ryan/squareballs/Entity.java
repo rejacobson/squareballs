@@ -124,8 +124,11 @@ public class Entity {
 	
 	public void update() {
 		// Restrict speed
-		if (velocity.getMagnitude() > maxVelocity) {
+		float speed = velocity.getMagnitude();
+		if (speed > maxVelocity) {
 			velocity.unit().multiply(maxVelocity);
+		} else if (speed < 0.05F) {
+			velocity.set(0, 0);
 		}
 				
 		position.add(velocity);
