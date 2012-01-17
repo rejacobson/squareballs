@@ -1,8 +1,9 @@
 package com.ryan.squareballs;
 
+import java.util.Random;
+
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.XmlResourceParser;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -23,22 +24,21 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
 	private TileList tileList;
 	
-	private Player[] players;
+	/*private Player[] players;
 	private int currentPlayerIndex;
 	private Player currentPlayer;
-	private Ball currentBall;
+	private Ball currentBall;*/
 	
-	private boolean touching;
-	private Vector2f touchPosition;
+	//private boolean touching;
+	//private Vector2f touchPosition;
 	
-	private boolean turnTaken;
+	//private boolean turnTaken;
 	private boolean levelWon;
 	
 	private float friction;
 	private float dampening;
 	
 	private ScoreCard scoreCard;
-	private BallIndicator ballIndicator;
 	private BallShooter ballShooter;
 	
 	private float scaleAmount;
@@ -56,7 +56,14 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	private void setupGame() {
 		//XmlResourceParser levelResources = getResources().getXml(R.xml.levels);
 		
-		ballIndicator = new BallIndicator();
+		Player[] players = new Player[3];
+		
+		players[0] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player1)));		
+		players[1] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player2)));		
+		players[2] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player3)));		
+		//players[3] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player4)));
+		
+		scoreCard = new ScoreCard(players, getResources());
 		ballShooter = new BallShooter(getResources());
 		
 		friction = 0.99F;
@@ -64,24 +71,17 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		
 		scaleAmount = 1.0F;
 					
-		touchPosition = new Vector2f();
-		touching = false;
+		//touchPosition = new Vector2f();
+		//touching = false;
 		
-		turnTaken = false;
+		//turnTaken = false;
 		
-		players = new Player[1];
 		
-		players[0] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player1)));		
-		/*players[1] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player2)));		
-		players[2] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player3)));		
-		players[3] = new Player(new Ball(BitmapFactory.decodeResource(getResources(), R.drawable.player4)));
-		*/
 		
-		scoreCard = new ScoreCard(players);
 		
 		tileList = new TileList(getResources(), 20, 20);
 		
-		levels = new int[13];
+		levels = new int[18];
 		levels[0] = R.drawable.level1;
 		levels[1] = R.drawable.level2;
 		levels[2] = R.drawable.level3;
@@ -95,33 +95,32 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		levels[10] = R.drawable.level11;
 		levels[11] = R.drawable.level12;
 		levels[12] = R.drawable.level13;
+		levels[13] = R.drawable.level14;
+		levels[14] = R.drawable.level15;
+		levels[15] = R.drawable.level16;
+		levels[16] = R.drawable.level17;
+		levels[17] = R.drawable.level18;
 		currentLevel = 0;
-		currentPlayerIndex = 0;
-		
+			
 		loadLevel();
 	}
 
 	public void loadLevel() {
-		level = new Level(BitmapFactory.decodeResource(getResources(), levels[currentLevel]), tileList);
+		Random r = new Random();
+		int lvl = r.nextInt(levels.length);
 		
-		Ball ball;
-		for (int i=0; i<players.length; i++) {
-			ball = players[i].getBall();
-			ball.position.set(0, 0);
-			ball.setActive(false);
-			ball.setWinner(false);
+		level = new Level(BitmapFactory.decodeResource(getResources(), levels[lvl]), tileList);
+		
+		Ball[] balls = scoreCard.getBalls();
+		for (int i=0; i<balls.length; i++) {
+			balls[i].position.set(0, 0);
+			balls[i].setActive(false);
+			balls[i].setWinner(false);
 		}
 		
 		levelWon = false;
-		turnTaken = false;
-		touching = false;
-		touchPosition.set(0, 0);
 		
-		//currentPlayerIndex = 0;
-		currentPlayer = players[currentPlayerIndex];
-		currentBall = currentPlayer.getBall();
-		ballIndicator.targetEntity(currentBall);
-		ballShooter.targetEntity(currentBall);
+		ballShooter.attachToBall(scoreCard.getBall());
 		
 		thread.Resume();
 	}
@@ -130,7 +129,8 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		thread.Pause();
 		
 		// Tally points
-		scoreCard.tallyPoints();
+		//scoreCard.tallyPoints();
+		scoreCard.finishLevel();
 		
 		if (currentLevel < levels.length-1) {
 			currentLevel++;
@@ -175,82 +175,62 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		touchPosition.set(event.getX(), event.getY());
-		
-		Log.d(TAG, "Touch position == "+touchPosition.toString());
-		
-		if (event.getAction() == MotionEvent.ACTION_DOWN && turnTaken == false) {
-			currentBall.detectSelection((int)event.getX(), (int)event.getY());
-			
-			if (currentBall.isTouched()) touching = true;
-			
-			if (event.getY() > getHeight() - 10) {
-				thread.SetRunning(false);
-				((Activity)getContext()).finish();
-			} else {
-				Log.d(TAG, "coords == "+ event.getX() +":"+ event.getY());
-			}
-		}
-		
-		if (event.getAction() == MotionEvent.ACTION_MOVE) {
-			if (currentBall.isTouched()) {				
-			}
-		}
-		
-		if (event.getAction() == MotionEvent.ACTION_UP) {
-			touching = false;
-			if (currentBall.isTouched()) {
-				turnTaken = true;
-				Vector2f touchUpPosition = new Vector2f(event.getX(), event.getY());
-				Vector2f velocity = ballShooter.getForce(); //Vector2f.subtract(currentBall.position, touchUpPosition).multiply(dampening);
+		//touchPosition.set(event.getX(), event.getY());
 				
-				currentBall.setTouched(false);
-				currentBall.setVelocity(velocity);
-			}
+		// DOWN
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			ballShooter.actionDown(event.getX(), event.getY());
+		}
+		
+		// MOVE
+		if (event.getAction() == MotionEvent.ACTION_MOVE) {
+			ballShooter.actionMove(event.getX(), event.getY());
+		}
+		
+		// UP
+		if (event.getAction() == MotionEvent.ACTION_UP) {
+			ballShooter.actionUp(event.getX(), event.getY());
 		}		
 		
 		return true;
 	}
 	
-	public void nextPlayerTurn() {
-		turnTaken = false;
+	public void finishTurn() {		
+		//turnTaken = false;
 		
-		if (currentPlayerIndex >= players.length-1) {
-			currentPlayerIndex = 0;
-		} else {
-			currentPlayerIndex++;
-		}
+		scoreCard.finishTurn();
 		
-		currentPlayer = players[currentPlayerIndex];
-		currentBall = currentPlayer.getBall();
+		ballShooter.attachToBall(scoreCard.getBall());
 		
-		ballIndicator.targetEntity(currentBall);
-		ballShooter.targetEntity(currentBall);
-	}
-	
-	public void update(long tickCount) {
-		ballIndicator.update();
-		
-		if (scaleAmount < 1 && !touching) {
-			scaleAmount += 0.01;
-		}
-		
-		Ball ball;
-		int movingBallsCount = 0;
+		Ball currentBall = scoreCard.getBall();
 		
 		if (!currentBall.isActive()) {
 			currentBall.position.set(level.getStartPosition().x, level.getStartPosition().y);
 			currentBall.setActive(true);
-			ballIndicator.targetEntity(currentBall);
+			ballShooter.attachToBall(currentBall);
+		}
+	}
+	
+	public void update(long tickCount) {
+		Ball[] balls = scoreCard.getBalls();
+		Ball ball;
+		int movingBallsCount = 0;
+		
+		//ballShooter.setTouchPosition(touchPosition);
+		
+		ball = scoreCard.getBall();
+		
+		if (!ball.isActive()) {
+			ball.position.set(level.getStartPosition().x, level.getStartPosition().y);
+			ball.setActive(true);
+			ballShooter.attachToBall(ball);
 		}
 		
-		for (int i=0; i<players.length; i++) {
-			ball = players[i].getBall();
-			
-			//ballShooter.setDirection(Vector2f.subtract(ball.position, touchPosition).getUnit());
-			ballShooter.setTouchPosition(touchPosition);
-			ballShooter.update();
-			//ballShooter.setMagnitude(Vector2f.subtract(ball.position, touchPosition).getMagnitude());
+		ballShooter.update();
+		
+		// Update all balls
+		for (int i=0; i<balls.length; i++) {
+			ball = balls[i];
 			
 			if (ball.isActive()) {
 				ball.update();
@@ -269,18 +249,19 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		}
 		
 		// Next player's turn
-		if (movingBallsCount == 0 && turnTaken) {
-			nextPlayerTurn();
+		if (movingBallsCount == 0 && ballShooter.isFired()) {
+			finishTurn();
 		}
 	}
 	
 	private void checkCollision() {
+		Ball[] balls = scoreCard.getBalls();
 		Ball b1, b2;
 		Tile tile;
 		
 		// Check collision between entities and walls
-		for (int i=0; i<players.length; i++) {
-			b1 = players[i].getBall();
+		for (int i=0; i<balls.length; i++) {
+			b1 = balls[i];
 			
 			if (!b1.isActive()) continue;
 			
@@ -339,15 +320,15 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 			
 		
 		// Check collision between entities
-		if (players.length > 1) {
+		if (balls.length > 1) {
 							
-			for (int i=0; i<players.length-1; i++) {
-				b1 = players[i].getBall();
+			for (int i=0; i<balls.length-1; i++) {
+				b1 = balls[i];
 				
 				if (!b1.isActive()) continue;
 				
-				for (int j=(i+1); j<players.length; j++) {
-					b2 = players[j].getBall();					
+				for (int j=(i+1); j<balls.length; j++) {
+					b2 = balls[j];					
 					
 					if (!b2.isActive()) continue;
 					
@@ -382,6 +363,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
+		Ball[] balls = scoreCard.getBalls();
 		Ball ball;
 		
 		// Detect touching past the edge
@@ -409,21 +391,14 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 		
 		level.draw(canvas);
 		
-		if (turnTaken == false) {
-			ballIndicator.draw(canvas);
+		for (int i=0; i<balls.length; i++) {
+			ball = balls[i];			
+			if (ball.isActive()) ball.draw(canvas);
 		}
 		
-		for (int i=0; i<players.length; i++) {
-			ball = players[i].getBall();
-			
-			if (!ball.isActive()) continue;
-			
-			ball.draw(canvas);
-			
-			if (ball.isTouched()) {
-				ballShooter.draw(canvas);
-			}
-		}
+		ballShooter.draw(canvas);
+		
+		scoreCard.draw(canvas);
 		
 	}
 	

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<levels>
+	<level number="1" bitmap="@drawable/level1"></level>
+	<level number="2" bitmap="@drawable/level2"></level>
+	<level number="3" bitmap="@drawable/level3"></level>
+</levels>

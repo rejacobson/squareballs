@@ -4,8 +4,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.util.Log;
 
 public class BallIndicator {
+	
+	private static final String TAG = BallIndicator.class.getSimpleName();
 	
 	private Paint paint;
 	private Vector2f position;
@@ -59,6 +62,7 @@ public class BallIndicator {
 	}
 	
 	public void draw(Canvas canvas) {
+		Log.d(TAG, "Indicator position == "+ position.toString());
 		paint.setAlpha(alpha);
 		paint.setStrokeWidth(strokeWidth);
 		canvas.drawRect(getRect(), paint);
